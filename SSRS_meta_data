@@ -1,0 +1,166 @@
+
+
+library(RODBC)
+
+dbhandle <- odbcDriverConnect('driver={SQL Server};
+                              server=MMDBAPRDSSRS01,18100;
+                              database=ReportServer;
+                              trusted_connection=true')
+
+
+dbhandle <- odbcDriverConnect('driver={SQL Server};
+                              server=MMWSREDPRDDWH01, 18000;
+                              database=MGMChinaDW;
+                              trusted_connection=true')
+
+
+
+
+test <- sqlQuery(dbhandle,"
+SELECT CAST(a.ScheduleID AS SYSNAME) AS JobName
+,CONVERT(XML,CONVERT(VARBINARY(MAX),e.Content)) AS reportXML
+,a.SubscriptionID
+,e.NAME
+,e.Path
+,d.Description
+,d.LastStatus
+,d.EventType
+,d.LastRunTime
+,ItemID	
+,Path,ParentID,Type
+,Property
+,CreationDate
+,e.ModifiedDate
+,Parameter
+,UserName
+--,b.date_created
+--,b.date_modified
+
+FROM [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS a
+--INNER JOIN msdb.dbo.sysjobs AS b ON CAST(a.ScheduleID AS SYSNAME) = b.NAME
+INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS c ON CAST(a.ScheduleID AS SYSNAME) = CAST(c.ScheduleID AS SYSNAME)
+INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.Subscriptions AS d ON c.SubscriptionID = d.SubscriptionID
+INNER JOIN (SELECT *,CONVERT(XML,CONVERT(VARBINARY(MAX),C.Content)) AS reportXML
+		--CONVERT(varchar(max), CONVERT(varbinary(max), content)) Fields
+		FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Catalog] c
+		WHERE C.Content is not null
+		AND C.Type = 2) AS e ON d.Report_OID = e.ItemID
+INNER JOIN [MMDBAPRDSSRS01].[ReportServer].[dbo].[Users] f ON e.CreatedByID=f.UserID
+
+  "
+)
+
+test2<-test[grep("Comp", test$reportXML), ]
+
+
+library(dplyr)
+test3<-distinct(test2,NAME, .keep_all= TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+select top 100 ReportName  = name
+  --  ,DataSetName  = x.value('(@Name)[1]', 'VARCHAR(250)') 
+ --  ,DataSourceName = x.value('(Query/DataSourceName)[1]','VARCHAR(250)')
+  -- ,CommandText  = x.value('(Query/CommandText)[1]','VARCHAR(250)')
+   ,Fields   = df.value('(@Name)[1]','VARCHAR(250)')
+ --  ,DataField  = df.value('(DataField)[1]','VARCHAR(250)')
+
+FROM (
+		SELECT *,C.Name,CONVERT(XML,CONVERT(VARBINARY(MAX),C.Content)) AS reportXML
+		--CONVERT(varchar(max), CONVERT(varbinary(max), content)) Fields
+		FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Catalog] c
+		WHERE C.Content is not null
+		AND C.Type = 2
+	  ) a
+ CROSS APPLY reportXML.nodes('/DataSet') r ( x )
+ CROSS APPLY x.nodes('Fields/Field') f(df) 
+ORDER BY name
+
+
+
+
+SELECT top 10 CAST(a.ScheduleID AS SYSNAME) AS JobName
+,CONVERT(XML,CONVERT(VARBINARY(MAX),e.Content)) AS reportXML
+,a.SubscriptionID
+,e.NAME
+,e.Path
+,d.Description
+,d.LastStatus
+,d.EventType
+,d.LastRunTime
+,ItemID	
+,Path,ParentID,Type
+,Property
+,CreationDate
+,e.ModifiedDate
+,Parameter
+,UserName
+--,b.date_created
+--,b.date_modified
+
+FROM [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS a
+--INNER JOIN msdb.dbo.sysjobs AS b ON CAST(a.ScheduleID AS SYSNAME) = b.NAME
+INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS c ON CAST(a.ScheduleID AS SYSNAME) = CAST(c.ScheduleID AS SYSNAME)
+INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.Subscriptions AS d ON c.SubscriptionID = d.SubscriptionID
+INNER JOIN (SELECT *,CONVERT(XML,CONVERT(VARBINARY(MAX),C.Content)) AS reportXML
+		--CONVERT(varchar(max), CONVERT(varbinary(max), content)) Fields
+		FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Catalog] c
+		WHERE C.Content is not null
+		AND C.Type = 2) AS e ON d.Report_OID = e.ItemID
+INNER JOIN [MMDBAPRDSSRS01].[ReportServer].[dbo].[Users] f ON e.CreatedByID=f.UserID
+
+
+SELECT [UserID]
+      ,[Sid]
+      ,[UserType]
+      ,[AuthType]
+      ,[UserName]
+      ,[ServiceToken]
+      ,[Setting]
+  FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Users]
+GO
+
+
+
+
+SELECT [srvid]
+      ,[srvstatus]
+      ,[srvname]
+      ,[srvproduct]
+      ,[providername]
+      ,[datasource]
+      ,[location]
+      ,[providerstring]
+      ,[schemadate]
+      ,[topologyx]
+      ,[topologyy]
+      ,[catalog]
+      ,[srvcollation]
+      ,[connecttimeout]
+      ,[querytimeout]
+      ,[srvnetname]
+      ,[isremote]
+      ,[rpc]
+      ,[pub]
+      ,[sub]
+      ,[dist]
+      ,[dpub]
+      ,[rpcout]
+      ,[dataaccess]
+      ,[collationcompatible]
+      ,[system]
+      ,[useremotecollation]
+      ,[lazyschemavalidation]
+      ,[collation]
+      ,[nonsqlsub]
+  FROM MGMChinaDWMDS.[DatabaseServer].[sys].[sysservers]
+GO
