@@ -35,16 +35,29 @@ SELECT CAST(a.ScheduleID AS SYSNAME) AS JobName
 ,UserName
 --,b.date_created
 --,b.date_modified
-
+, DataSetName
+,DataSourceName
+,CommandType
+,CommandText
 FROM [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS a
 --INNER JOIN msdb.dbo.sysjobs AS b ON CAST(a.ScheduleID AS SYSNAME) = b.NAME
 INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.ReportSchedule AS c ON CAST(a.ScheduleID AS SYSNAME) = CAST(c.ScheduleID AS SYSNAME)
 INNER JOIN [MMDBAPRDSSRS01].ReportServer.dbo.Subscriptions AS d ON c.SubscriptionID = d.SubscriptionID
-INNER JOIN (SELECT *,CONVERT(XML,CONVERT(VARBINARY(MAX),C.Content)) AS reportXML
-		--CONVERT(varchar(max), CONVERT(varbinary(max), content)) Fields
-		FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Catalog] c
-		WHERE C.Content is not null
-		AND C.Type = 2) AS e ON d.Report_OID = e.ItemID
+INNER JOIN (
+        		SELECT a.*,
+            DataSetName = x.value('@Name', 'NVARCHAR(256)'),
+            DataSourceName = x.value('(*:Query/*:DataSourceName)[1]', 'NVARCHAR(260)'),
+            CommandType = x.value('(*:Query/*:CommandType)[1]', 'NVARCHAR(15)'),
+            CommandText = x.value('(*:Query/*:CommandText)[1]', 'NVARCHAR(MAX)')
+			
+    FROM (
+			Select *,CONVERT(XML,CONVERT(VARBINARY(MAX),Content)) ContentXml from [MMDBAPRDSSRS01].[ReportServer].[dbo].[Catalog] 
+	  	--CONVERT(varchar(max), CONVERT(varbinary(max), content)) Fields
+		WHERE Content is not null
+		AND Type = 2
+		)a
+    CROSS APPLY ContentXml.nodes('/*:Report/*:DataSets/*:DataSet')  r (x)
+		) AS e ON d.Report_OID = e.ItemID
 INNER JOIN [MMDBAPRDSSRS01].[ReportServer].[dbo].[Users] f ON e.CreatedByID=f.UserID
 
   "
