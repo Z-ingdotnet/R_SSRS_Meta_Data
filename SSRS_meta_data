@@ -3,14 +3,14 @@
 library(RODBC)
 
 dbhandle <- odbcDriverConnect('driver={SQL Server};
-                              server=MMDBAPRDSSRS01,18100;
+                              server=Iversonhashedserverip,18100;
                               database=ReportServer;
                               trusted_connection=true')
 
 
 dbhandle <- odbcDriverConnect('driver={SQL Server};
-                              server=MMWSREDPRDDWH01, 18000;
-                              database=MGMChinaDW;
+                              server=Iversonhashedserverip, 18000;
+                              database=Iversonhashedserver;
                               trusted_connection=true')
 
 
@@ -139,7 +139,7 @@ SELECT [UserID]
       ,[UserName]
       ,[ServiceToken]
       ,[Setting]
-  FROM [MMDBAPRDSSRS01].[ReportServer].[dbo].[Users]
+  FROM [Iversonhashedserverip].[ReportServer].[dbo].[Users]
 GO
 
 
@@ -175,5 +175,5 @@ SELECT [srvid]
       ,[lazyschemavalidation]
       ,[collation]
       ,[nonsqlsub]
-  FROM MGMChinaDWMDS.[DatabaseServer].[sys].[sysservers]
+  FROM Iversonhashedserver.[xxxx].[sys].[sysservers]
 GO
