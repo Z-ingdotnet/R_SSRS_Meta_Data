@@ -1,19 +1,5 @@
 
 
-library(RODBC)
-
-dbhandle <- odbcDriverConnect('driver={SQL Server};
-                              server=Iversonhashedserverip,18100;
-                              database=ReportServer;
-                              trusted_connection=true')
-
-
-dbhandle <- odbcDriverConnect('driver={SQL Server};
-                              server=Iversonhashedserverip, 18000;
-                              database=Iversonhashedserver;
-                              trusted_connection=true')
-
-
 
 
 test <- sqlQuery(dbhandle,"
